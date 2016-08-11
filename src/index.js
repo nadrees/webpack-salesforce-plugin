@@ -17,9 +17,9 @@ class WebpackSalesforcePlugin {
         this.options = mergedOptions;
 
         if (!this.options.salesforce.username)
-            throw 'salesforce.username is required.';
+            throw new Error('salesforce.username is required.');
         if (!this.options.salesforce.password)
-            throw 'salesforce.password is required.';
+            throw new Error('salesforce.password is required.');
     }
 
     apply(compiler) {

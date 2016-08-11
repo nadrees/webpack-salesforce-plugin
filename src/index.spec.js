@@ -44,6 +44,12 @@ describe('The WebpackSalesforcePlugin', () => {
     });
 
     describe('constructor', () => {
+        it('should handle the `salesforce` key missing', () => {
+            delete args.salesforce;
+
+            expect(createInstance).toThrowError(/(username|password)/);
+        });
+
         it('should validate that the username is required', () => {
             args.salesforce.username = null;
 
