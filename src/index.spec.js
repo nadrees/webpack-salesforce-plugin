@@ -1,6 +1,8 @@
 import WebpackSalesforcePlugin from './index';
 import {expect} from 'chai';
 import sinon from 'sinon';
+import Zip from 'node-zip';
+import glob from 'glob';
 
 describe('The WebpackSalesforcePlugin', () => {
     let args;
@@ -100,57 +102,88 @@ describe('The WebpackSalesforcePlugin', () => {
 
             expect(plugin.options.resources).to.eql([]);
         });
+
+        it('should require the resource name', () => {
+            args.resources.push({
+                name: null,
+                files: ['test/*.js']
+            });
+
+            expect(createInstance).to.throw();
+        });
     });
 
     describe('uploadFiles function', () => {
         let plugin = null;
 
         beforeEach(() => {
+            args.resources.push({
+                name: 'test',
+                files: ['test/*.js']
+            });
+
             plugin = createInstance();
         });
 
         it('should support an explicit file path', () => {
-            plugin.options.resources.push({
+            let zipFilesStub = sinon.stub(plugin, '__zipResource');
+
+            plugin.options.resources = [{
                 name: 'test',
                 files: ['test/file1.js']
-            });
-
-            let stub = sinon.stub(plugin, '__doUpload');
+            }];
 
             plugin.uploadFiles();
 
-            expect(stub.calledOnce).to.be.true;
+            expect(zipFilesStub.calledOnce).to.be.true;
 
-            let args = stub.lastCall.args;
+            let args = zipFilesStub.lastCall.args;
             expect(args.length).to.equal(1);
             expect(args[0].name).to.equal(plugin.options.resources[0].name);
             expect(args[0].files.length).to.equal(1);
         });
 
         it('should support the glob format', () => {
-            plugin.options.resources.push({
-                name: 'test',
-                files: ['test/*.js']
-            });
-
-            let stub = sinon.stub(plugin, '__doUpload');
+            let zipFilesStub = sinon.stub(plugin, '__zipResource');
 
             plugin.uploadFiles();
 
-            expect(stub.calledOnce).to.be.true;
+            expect(zipFilesStub.calledOnce).to.be.true;
 
-            let args = stub.lastCall.args;
+            let args = zipFilesStub.lastCall.args;
             expect(args.length).to.equal(1);
             expect(args[0].name).to.equal(plugin.options.resources[0].name);
             expect(args[0].files.length).to.equal(2);
         });
 
         it('should dedup files if matched multiple times', () => {
-            plugin.options.resources.push({
+            let zipFilesStub = sinon.stub(plugin, '__zipResource');
+
+            plugin.options.resources = [{
                 name: 'test',
                 files: ['test/*.js', 'test/file1.js']
-            });
+            }];
 
+            plugin.uploadFiles();
+
+            expect(zipFilesStub.calledOnce).to.be.true;
+
+            let args = zipFilesStub.lastCall.args;
+            expect(args.length).to.equal(1);
+            expect(args[0].name).to.equal(plugin.options.resources[0].name);
+            expect(args[0].files.length).to.equal(2);
+        });
+
+        it('should require at least 1 file to be matched', () => {
+            plugin.options.resources = [{
+                name: 'test',
+                files: []
+            }];
+
+            expect(() => plugin.uploadFiles()).to.throw();
+        });
+
+        it('should zip the files that are matched', () => {
             let stub = sinon.stub(plugin, '__doUpload');
 
             plugin.uploadFiles();
@@ -159,15 +192,17 @@ describe('The WebpackSalesforcePlugin', () => {
 
             let args = stub.lastCall.args;
             expect(args.length).to.equal(1);
-            expect(args[0].name).to.equal(plugin.options.resources[0].name);
-            expect(args[0].files.length).to.equal(2);
+
+            let resource = args[0][0];
+            expect(resource.fullName).to.equal(plugin.options.resources[0].name);
+
+            let fileNames = glob.sync('test/*.js');
+            let zip = Zip(resource.content, {base64: true});
+
+            fileNames.forEach((fName) => {
+                expect(zip.files[fName]).to.exist;
+            });
         });
-
-        it('should require the resource name');
-
-        it('should require at least 1 file');
-
-        it('should zip the files that are matched');
 
         it('should upload the resource to salesforce');
     });

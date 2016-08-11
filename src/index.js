@@ -1,7 +1,10 @@
+import fs from 'fs';
+
 import objectAssign from 'object-assign';
 import {Connection} from 'jsforce';
 import glob from 'glob';
 import {union} from 'lodash';
+import Zip from 'node-zip';
 
 class WebpackSalesforcePlugin {
     constructor(options = {}) {
@@ -26,6 +29,11 @@ class WebpackSalesforcePlugin {
         if (!this.options.salesforce.password)
             throw new Error('salesforce.password is required.');
 
+        this.options.resources.forEach((resource) => {
+            if (!resource.name)
+                throw new Error('Resource name is required.');
+        });
+
         this.conn = new Connection({loginUrl: this.options.salesforce.loginUrl});
     }
 
@@ -34,15 +42,29 @@ class WebpackSalesforcePlugin {
     }
 
     uploadFiles() {
-        let globbedResources = this.__globFiles();
-
-        globbedResources.forEach((resource) => {
-            this.__doUpload(resource);
-        });
+        let resources = this.__globFiles().map((resource) => this.__zipResource(resource));
+        this.__doUpload(resources);
     }
 
-    __doUpload(globbedResource) {
+    __doUpload(resources) {
 
+    }
+
+    __zipResource(globbedResource) {
+        if (globbedResource.files.length === 0) {
+            throw new Error('Resource ' + name + ' matched no files.');
+        }
+
+        let zip = new Zip();
+        globbedResource.files.forEach((f) => {
+            let data = fs.readFileSync(f, 'utf8');
+            zip.file(f, data);
+        });
+
+        return {
+            fullName: globbedResource.name,
+            content: zip.generate({ base64: true, compression: 'DEFLATE' })
+        };
     }
 
     __globFiles() {
