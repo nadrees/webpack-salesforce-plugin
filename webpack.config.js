@@ -13,7 +13,8 @@ var config = {
     },
     module: {
         loaders: [
-            {test: /\.js/, include: APP_DIR, loader: 'babel'}
+            {test: /\.js/, include: APP_DIR, loader: 'babel'},
+            {test: /\.json/, loader: 'json'}
         ]
     },
     externals: {
