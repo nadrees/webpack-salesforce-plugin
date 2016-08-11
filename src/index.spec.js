@@ -1,4 +1,6 @@
 import WebpackSalesforcePlugin from './index';
+import {expect} from 'chai';
+import sinon from 'sinon';
 
 describe('The WebpackSalesforcePlugin', () => {
     let args;
@@ -12,13 +14,14 @@ describe('The WebpackSalesforcePlugin', () => {
             salesforce: {
                 username: 'test@example.com',
                 password: 'testpassword'
-            }
+            },
+            resources: []
         };
     });
 
     describe('prototype', () => {
         it('should have an `apply` function', () => {
-            expect(WebpackSalesforcePlugin.prototype.apply).not.toBeNull();
+            expect(WebpackSalesforcePlugin.prototype.apply).to.not.be.null;
         });
     });
 
@@ -27,19 +30,19 @@ describe('The WebpackSalesforcePlugin', () => {
             let compiler = {
                 plugin: function () {}
             };
-            spyOn(compiler, 'plugin');
+            sinon.spy(compiler, 'plugin');
 
             let plugin = createInstance();
 
             plugin.apply(compiler);
 
-            expect(compiler.plugin).toHaveBeenCalled();
-            expect(compiler.plugin.calls.count()).toBe(1);
+            expect(compiler.plugin.called).to.be.true;
+            expect(compiler.plugin.callCount).to.equal(1);
 
-            let args = compiler.plugin.calls.mostRecent().args;
-            expect(args.length).toBe(2);
-            expect(args[0]).toBe('done');
-            expect(args[1]).not.toBeNull();
+            let args = compiler.plugin.lastCall.args;
+            expect(args.length).to.equal(2);
+            expect(args[0]).to.equal('done');
+            expect(args[1]).not.to.be.null;
         });
     });
 
@@ -47,25 +50,25 @@ describe('The WebpackSalesforcePlugin', () => {
         it('should handle the `salesforce` key missing', () => {
             delete args.salesforce;
 
-            expect(createInstance).toThrowError(/(username|password)/);
+            expect(createInstance).to.throw(/(username|password)/);
         });
 
         it('should validate that the username is required', () => {
             args.salesforce.username = null;
 
-            expect(createInstance).toThrow();
+            expect(createInstance).to.throw();
         });
 
         it('should validate that the password is required', () => {
             args.salesforce.password = null;
 
-            expect(createInstance).toThrow();
+            expect(createInstance).to.throw();
         });
 
         it('should default the security token to empty string', () => {
             let plugin = createInstance();
 
-            expect(plugin.options.salesforce.token).toBe('');
+            expect(plugin.options.salesforce.token).to.equal('');
         });
 
         it('should not override the security token if present', () => {
@@ -73,13 +76,13 @@ describe('The WebpackSalesforcePlugin', () => {
 
             let plugin = createInstance();
 
-            expect(plugin.options.salesforce.token).toBe(args.salesforce.token);
+            expect(plugin.options.salesforce.token).to.equal(args.salesforce.token);
         });
 
         it('should default the login url to `https://login.salesforce.com`', () => {
             let plugin = createInstance();
 
-            expect(plugin.options.salesforce.loginUrl).toBe('https://login.salesforce.com');
+            expect(plugin.options.salesforce.loginUrl).to.equal('https://login.salesforce.com');
         });
 
         it('should not override the login url if present', () => {
@@ -87,7 +90,15 @@ describe('The WebpackSalesforcePlugin', () => {
 
             let plugin = createInstance();
 
-            expect(plugin.options.salesforce.loginUrl).toBe(args.salesforce.loginUrl);
+            expect(plugin.options.salesforce.loginUrl).to.equal(args.salesforce.loginUrl);
+        });
+
+        it('should default the `resources` key to an empty array', () => {
+            delete args.resources;
+
+            let plugin = createInstance();
+
+            expect(plugin.options.resources).to.eql([]);
         });
     });
 
