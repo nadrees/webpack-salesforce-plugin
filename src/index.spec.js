@@ -103,9 +103,65 @@ describe('The WebpackSalesforcePlugin', () => {
     });
 
     describe('uploadFiles function', () => {
-        it('should support an explicit file path');
+        let plugin = null;
 
-        it('should support the glob format');
+        beforeEach(() => {
+            plugin = createInstance();
+        });
+
+        it('should support an explicit file path', () => {
+            plugin.options.resources.push({
+                name: 'test',
+                files: ['test/file1.js']
+            });
+
+            let stub = sinon.stub(plugin, '__doUpload');
+
+            plugin.uploadFiles();
+
+            expect(stub.calledOnce).to.be.true;
+
+            let args = stub.lastCall.args;
+            expect(args.length).to.equal(1);
+            expect(args[0].name).to.equal(plugin.options.resources[0].name);
+            expect(args[0].files.length).to.equal(1);
+        });
+
+        it('should support the glob format', () => {
+            plugin.options.resources.push({
+                name: 'test',
+                files: ['test/*.js']
+            });
+
+            let stub = sinon.stub(plugin, '__doUpload');
+
+            plugin.uploadFiles();
+
+            expect(stub.calledOnce).to.be.true;
+
+            let args = stub.lastCall.args;
+            expect(args.length).to.equal(1);
+            expect(args[0].name).to.equal(plugin.options.resources[0].name);
+            expect(args[0].files.length).to.equal(2);
+        });
+
+        it('should dedup files if matched multiple times', () => {
+            plugin.options.resources.push({
+                name: 'test',
+                files: ['test/*.js', 'test/file1.js']
+            });
+
+            let stub = sinon.stub(plugin, '__doUpload');
+
+            plugin.uploadFiles();
+
+            expect(stub.calledOnce).to.be.true;
+
+            let args = stub.lastCall.args;
+            expect(args.length).to.equal(1);
+            expect(args[0].name).to.equal(plugin.options.resources[0].name);
+            expect(args[0].files.length).to.equal(2);
+        });
 
         it('should require the resource name');
 

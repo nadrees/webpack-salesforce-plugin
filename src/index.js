@@ -1,6 +1,7 @@
 import objectAssign from 'object-assign';
 import {Connection} from 'jsforce';
 import glob from 'glob';
+import {union} from 'lodash';
 
 class WebpackSalesforcePlugin {
     constructor(options = {}) {
@@ -33,7 +34,30 @@ class WebpackSalesforcePlugin {
     }
 
     uploadFiles() {
+        let globbedResources = this.__globFiles();
 
+        globbedResources.forEach((resource) => {
+            this.__doUpload(resource);
+        });
+    }
+
+    __doUpload(globbedResource) {
+
+    }
+
+    __globFiles() {
+        return this.options.resources.map((resource) => {
+            let filesToZip = resource.files.map((fileGlob) => {
+                return glob.sync(fileGlob, {});
+            }).reduce((currentList, nextList) => {
+                return union(currentList, nextList);
+            }, []);
+
+            return {
+                name: resource.name,
+                files: filesToZip
+            }
+        });
     }
 }
 
