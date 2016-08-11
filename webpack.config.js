@@ -17,7 +17,9 @@ var config = {
             {test: /\.json/, loader: 'json'}
         ]
     },
+    target: 'node',
     externals: {
+        "jsforce": "jsforce"
     }
 };
 
