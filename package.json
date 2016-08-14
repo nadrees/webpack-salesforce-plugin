@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "webpack -d",
     "build": "webpack -p",
-    "test": "mocha-webpack --webpack-config webpack.config-test.js 'src/**/*.spec.js' --colors --watch"
+    "test": "mocha-webpack --webpack-config webpack.config-test.js src/**/*.spec.js --colors --watch"
   },
   "repository": {
     "type": "git",

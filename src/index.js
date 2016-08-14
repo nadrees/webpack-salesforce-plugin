@@ -47,7 +47,23 @@ class WebpackSalesforcePlugin {
     }
 
     __doUpload(resources) {
+        console.log('Logging in to Salesforce.');
 
+        this.conn.login(this.options.username, this.options.password, this.options.token, (err, res) => {
+            if (err)
+                console.error(err);
+            else {
+                this.conn.metadata.upsert('StaticResource', resources, (err, results) => {
+                    if (err)
+                        console.error(err);
+                    else {
+                        if (results && results.length) {
+                            results.filter((r) => !result.success).forEach((r) => console.error(r));
+                        }
+                    }
+                });
+            }
+        });
     }
 
     __zipResource(globbedResource) {

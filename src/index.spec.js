@@ -114,7 +114,8 @@ describe('The WebpackSalesforcePlugin', () => {
     });
 
     describe('uploadFiles function', () => {
-        let plugin = null;
+        let plugin = null,
+            stub = null;
 
         beforeEach(() => {
             args.resources.push({
@@ -123,6 +124,7 @@ describe('The WebpackSalesforcePlugin', () => {
             });
 
             plugin = createInstance();
+            stub = sinon.stub(plugin, '__doUpload');
         });
 
         it('should support an explicit file path', () => {
@@ -184,8 +186,6 @@ describe('The WebpackSalesforcePlugin', () => {
         });
 
         it('should zip the files that are matched', () => {
-            let stub = sinon.stub(plugin, '__doUpload');
-
             plugin.uploadFiles();
 
             expect(stub.calledOnce).to.be.true;
@@ -204,6 +204,44 @@ describe('The WebpackSalesforcePlugin', () => {
             });
         });
 
-        it('should upload the resource to salesforce');
+        describe('when uploading to Salesforce', () => {
+            beforeEach(() => {
+                stub.restore();
+            });
+
+            describe('and when the connection is valid', () => {
+                it('should call the metadata API ```upsert``` function');
+
+                describe('and the metadata call succeeds', () => {
+                    it('should report any errors found');
+
+                    it('should not report the successes');
+                });
+
+                describe('and the metadata call fail', () => {
+                    it('should report the error to console.error');
+                });
+            });
+
+        });
+        describe('and when the connection is invalid', () => {
+            beforeEach(() => {
+                stub.restore();
+
+                sinon.stub(plugin.conn, 'login');
+                plugin.conn.login.returns('Test Error', null);
+
+                sinon.spy(plugin.conn.metadata, 'upsert');
+            });
+
+            it('should not call the metadata API', () => {
+                plugin.uploadFiles();
+
+                expect(plugin.conn.login.calledOnce).to.be.true;
+                expect(plugin.conn.metadata.upsert.called).to.be.false;
+            });
+
+            it('should log the error to the console.error');
+        });
     });
 });
