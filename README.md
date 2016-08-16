@@ -1,4 +1,7 @@
 # webpack-salesforce-plugin
+
+[![MIT Licence](https://badges.frapsoft.com/os/mit/mit.svg?v=103)](https://opensource.org/licenses/mit-license.php)   
+
 A small configurable plugin that can zip and deploy bundle files to Salesforce as static resources.
 
 ## Installation
