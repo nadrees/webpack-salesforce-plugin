@@ -2,7 +2,7 @@
   "name": "webpack-salesforce-plugin",
   "version": "1.0.0",
   "description": "A small configurable plugin that can zip and upload bundle files to Salesforce as static resources.",
-  "main": "dist/index.js",
+  "main": "dist/webpackSalesforcePlugin.js",
   "scripts": {
     "dev": "webpack -d",
     "build": "webpack -p",

@@ -221,6 +221,25 @@ describe('The WebpackSalesforcePlugin', () => {
             expect(args[1]).to.equal(plugin.options.salesforce.password + plugin.options.salesforce.token);
         });
 
+        it('should correctly format the resources to be uploaded', () => {
+            plugin.uploadFiles(null, () => {});
+
+            let args = stub.lastCall.args;
+            expect(args.length).to.equal(2);
+
+            expect(args[0].length).to.be.greaterThan(0);
+            args[0].forEach((resource) => {
+                expect(resource.fullName).to.exist;
+                expect(resource.fullName).to.not.be.null;
+
+                expect(resource.content).to.exist;
+                expect(resource.content).to.not.be.null;
+
+                expect(resource.contentType).to.exist;
+                expect(resource.contentType).to.not.be.null;
+            });
+        });
+
         describe('when uploading to Salesforce', () => {
             beforeEach(() => {
                 stub.restore();
@@ -230,19 +249,59 @@ describe('The WebpackSalesforcePlugin', () => {
 
             describe('and when the connection is valid', () => {
                 beforeEach(() => {
-                    plugin.conn.login.returns(null, null);
+                    plugin.conn.login.callsArgWith(2, null, null);
+
+                    sinon.stub(plugin.conn.metadata, 'upsert');
                 });
 
-                it('should call the metadata API ```upsert``` function');
+                it('should call the metadata API ```upsert``` function with the correct arguments', (done) => {
+                    plugin.conn.metadata.upsert.callsArg(2);
+
+                    plugin.uploadFiles(null, () => {
+                        expect(plugin.conn.metadata.upsert.calledOnce).to.be.true;
+
+                        let args = plugin.conn.metadata.upsert.lastCall.args;
+                        expect(args.length).to.equal(3);
+                        expect(args[0]).to.equal('StaticResource');
+                        expect(args[1].length).to.exist;
+
+                        done();
+                    });
+                });
 
                 describe('and the metadata call succeeds', () => {
-                    it('should report any errors found');
+                    beforeEach(() => {
+                        plugin.conn.metadata.upsert.callsArgWith(2, null, [
+                            {success: true},
+                            {success: false, error: 'test'}
+                        ]);
+                    });
 
-                    it('should not report the successes');
+                    it('should report any errors found', (done) => {
+                        sinon.spy(console, 'error');
+
+                        plugin.uploadFiles(null, () => {
+                            expect(console.error.calledOnce).to.be.true;
+
+                            done();
+                        });
+                    });
                 });
 
                 describe('and the metadata call fail', () => {
-                    it('should report the error to console.error');
+                    beforeEach(() => {
+                        plugin.conn.metadata.upsert.callsArgWith(2, 'Test Error', null);
+                    });
+
+                    it('should report the error to console.error', (done) => {
+                        sinon.spy(console, 'error');
+
+                        plugin.uploadFiles(null, () => {
+                            expect(console.error.calledOnce).to.be.true;
+
+                            done();
+                        });
+                    });
                 });
             });
 

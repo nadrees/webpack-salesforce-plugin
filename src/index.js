@@ -61,7 +61,7 @@ class WebpackSalesforcePlugin {
                         console.error(err);
                     else {
                         if (results && results.length) {
-                            results.filter((r) => !result.success).forEach((r) => console.error(r));
+                            results.filter((r) => !r.success).forEach((r) => console.error(r));
                         }
                     }
 
@@ -84,7 +84,8 @@ class WebpackSalesforcePlugin {
 
         return {
             fullName: globbedResource.name,
-            content: zip.generate({ base64: true, compression: 'DEFLATE' })
+            content: zip.generate({ base64: true, compression: 'DEFLATE' }),
+            contentType: 'application/zip'
         };
     }
 

@@ -23,7 +23,7 @@ var config = {
     target: 'node',
     externals: [nodeExternals({
         whitelist: ['object-assign', 'glob', 'lodash', 'node-zip']
-    })],
+    })]
 };
 
 module.exports = config;
