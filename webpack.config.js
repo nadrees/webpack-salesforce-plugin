@@ -1,4 +1,5 @@
-var path = require('path');
+var path = require('path'),
+    nodeExternals = require('webpack-node-externals');
 
 var BUILD_DIR = path.resolve(__dirname, 'dist');
 var APP_DIR = path.resolve(__dirname, 'src');
@@ -9,7 +10,9 @@ var config = {
     },
     output: {
         path: BUILD_DIR,
-        filename: 'webpackSalesforcePlugin.js'
+        filename: 'webpackSalesforcePlugin.js',
+        libraryTarget: 'commonjs2',
+        library: 'WebpackSalesforcePlugin'
     },
     module: {
         loaders: [
@@ -18,9 +21,9 @@ var config = {
         ]
     },
     target: 'node',
-    externals: {
-        "jsforce": "jsforce"
-    }
+    externals: [nodeExternals({
+        whitelist: ['object-assign', 'glob', 'lodash', 'node-zip']
+    })],
 };
 
 module.exports = config;

@@ -28,7 +28,7 @@ describe('The WebpackSalesforcePlugin', () => {
     });
 
     describe('apply function', () => {
-        it('should register on the `done` step', () => {
+        it('should register on the `after-emit` step', () => {
             let compiler = {
                 plugin: function () {}
             };
@@ -43,7 +43,7 @@ describe('The WebpackSalesforcePlugin', () => {
 
             let args = compiler.plugin.lastCall.args;
             expect(args.length).to.equal(2);
-            expect(args[0]).to.equal('done');
+            expect(args[0]).to.equal('after-emit');
             expect(args[1]).not.to.be.null;
         });
     });
@@ -191,7 +191,7 @@ describe('The WebpackSalesforcePlugin', () => {
             expect(stub.calledOnce).to.be.true;
 
             let args = stub.lastCall.args;
-            expect(args.length).to.equal(1);
+            expect(args.length).to.equal(2);
 
             let resource = args[0][0];
             expect(resource.fullName).to.equal(plugin.options.resources[0].name);
@@ -204,12 +204,35 @@ describe('The WebpackSalesforcePlugin', () => {
             });
         });
 
+        it('should call the login function with the correct arguments', () => {
+            plugin.options.salesforce.token = 'testtoken';
+
+            stub.restore();
+
+            sinon.stub(plugin.conn, 'login');
+
+            plugin.uploadFiles(null, () => {});
+
+            expect(plugin.conn.login.calledOnce).to.be.true;
+
+            let args = plugin.conn.login.lastCall.args;
+            expect(args.length).to.equal(3);
+            expect(args[0]).to.equal(plugin.options.salesforce.username);
+            expect(args[1]).to.equal(plugin.options.salesforce.password + plugin.options.salesforce.token);
+        });
+
         describe('when uploading to Salesforce', () => {
             beforeEach(() => {
                 stub.restore();
+
+                sinon.stub(plugin.conn, 'login');
             });
 
             describe('and when the connection is valid', () => {
+                beforeEach(() => {
+                    plugin.conn.login.returns(null, null);
+                });
+
                 it('should call the metadata API ```upsert``` function');
 
                 describe('and the metadata call succeeds', () => {
@@ -223,25 +246,48 @@ describe('The WebpackSalesforcePlugin', () => {
                 });
             });
 
-        });
-        describe('and when the connection is invalid', () => {
-            beforeEach(() => {
-                stub.restore();
+            describe('and when the connection is invalid', () => {
+                beforeEach(() => {
+                    plugin.conn.login.callsArgWith(2, 'Test Error', null);
 
-                sinon.stub(plugin.conn, 'login');
-                plugin.conn.login.returns('Test Error', null);
+                    sinon.spy(plugin.conn.metadata, 'upsert');
+                });
 
-                sinon.spy(plugin.conn.metadata, 'upsert');
+                it('should not call the metadata API', (done) => {
+                    plugin.uploadFiles(null, () => {
+                        expect(plugin.conn.login.calledOnce).to.be.true;
+                        expect(plugin.conn.metadata.upsert.called).to.be.false;
+
+                        done();
+                    });
+                });
+
+                it('should report the error to console.error', (done) => {
+                    sinon.spy(console, 'error');
+
+                    plugin.uploadFiles(null, () => {
+                        expect(console.error.calledOnce).to.be.true;
+
+                        let args = console.error.lastCall.args;
+                        expect(args.length).to.equal(1);
+                        expect(args[0]).to.equal('Test Error');
+
+                        done();
+                    });
+                });
             });
-
-            it('should not call the metadata API', () => {
-                plugin.uploadFiles();
-
-                expect(plugin.conn.login.calledOnce).to.be.true;
-                expect(plugin.conn.metadata.upsert.called).to.be.false;
-            });
-
-            it('should log the error to the console.error');
         });
+    });
+
+    // clean up the spies on console.* methods
+    // to prevent any issues when running tests in 'watch' mode
+    afterEach(() => {
+        if(console.log.restore) {
+            console.log.restore();
+        }
+
+        if (console.error.restore) {
+            console.error.restore();
+        }
     });
 });

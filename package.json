@@ -23,8 +23,8 @@
   },
   "homepage": "https://github.com/nadrees/webpack-salesforce-plugin#readme",
   "dependencies": {
-    "webpack": "^1.13.1",
-    "jsforce": "^1.7.0"
+    "jsforce": "^1.7.0",
+    "webpack": "^1.13.1"
   },
   "devDependencies": {
     "babel-core": "^6.13.2",

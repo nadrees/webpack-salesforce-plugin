@@ -38,21 +38,24 @@ class WebpackSalesforcePlugin {
     }
 
     apply(compiler) {
-        compiler.plugin('done', this.uploadFiles.bind(this))
+        compiler.plugin('after-emit', this.uploadFiles.bind(this))
     }
 
-    uploadFiles() {
+    uploadFiles(compilation, done) {
         let resources = this.__globFiles().map((resource) => this.__zipResource(resource));
-        this.__doUpload(resources);
+        this.__doUpload(resources, done);
     }
 
-    __doUpload(resources) {
+    __doUpload(resources, done) {
         console.log('Logging in to Salesforce.');
 
-        this.conn.login(this.options.username, this.options.password, this.options.token, (err, res) => {
-            if (err)
+        this.conn.login(this.options.salesforce.username, this.options.salesforce.password + (this.options.salesforce.token || ''), (err, res) => {
+            if (err) {
                 console.error(err);
+                done();
+            }
             else {
+                console.log('Connected to Salesforce. Uploading resources.');
                 this.conn.metadata.upsert('StaticResource', resources, (err, results) => {
                     if (err)
                         console.error(err);
@@ -61,6 +64,8 @@ class WebpackSalesforcePlugin {
                             results.filter((r) => !result.success).forEach((r) => console.error(r));
                         }
                     }
+
+                    done();
                 });
             }
         });
@@ -99,4 +104,4 @@ class WebpackSalesforcePlugin {
     }
 }
 
-export default WebpackSalesforcePlugin;
+module.exports = WebpackSalesforcePlugin;
