@@ -48,7 +48,7 @@ class WebpackSalesforcePlugin {
 
     __doUpload(resources, done) {
         console.log('Logging in to Salesforce.');
-
+        
         this.conn.login(this.options.salesforce.username, this.options.salesforce.password + (this.options.salesforce.token || ''), (err, res) => {
             if (err) {
                 console.error(err);
@@ -78,8 +78,13 @@ class WebpackSalesforcePlugin {
 
         let zip = new Zip();
         globbedResource.files.forEach((f) => {
-            let data = fs.readFileSync(f, 'utf8');
-            zip.file(f, data);
+            if(f.match(/.*?woff(2?)$/)){
+                let data = fs.readFileSync(f);
+                zip.file(f, data);
+            } else {
+                let data = fs.readFileSync(f, 'utf8');
+                zip.file(f, data);
+            }
         });
 
         return {
